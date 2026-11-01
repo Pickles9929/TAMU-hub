@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aggie Hub</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --maroon:#5B0A1A;
+  --maroon-deep:#420714;
+  --rose:#F3E3E6;
+  --paper:#F2F0F3;
+  --card:#FFFFFF;
+  --ink:#1E1619;
+  --muted:#6B6166;
+  --line:#E2DCE0;
+  --sage:#2F6B5F;
+  --late:#B42318;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --body:"Instrument Sans", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--body)}
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #C9A227;outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* Header band */
+.band{background:var(--maroon);color:#fff;padding:28px 0 30px}
+.band .wrap{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:end}
+.hello{font:800 clamp(2.6rem,6vw,4.6rem)/0.95 var(--display);letter-spacing:-0.02em;margin:0}
+.date{font:500 1.15rem/1.3 var(--display);margin:12px 0 4px;opacity:.92}
+.summary{margin:0;color:#F0D9DE;max-width:52ch}
+.band-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff;padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:500;font-size:.92rem}
+.btn-ghost:hover{background:rgba(255,255,255,.12)}
+
+/* Weather */
+.wx{min-width:300px;background:var(--maroon-deep);border-radius:18px;padding:16px 18px}
+.wx-top{display:flex;align-items:center;gap:14px}
+.wx-temp{font:800 3.4rem/1 var(--display);letter-spacing:-0.03em}
+.wx-cond{font-weight:600}
+.wx-sub{color:#E7C9CF;font-size:.9rem}
+.wx-hours{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:14px;text-align:center;font-size:.82rem}
+.wx-hours div{background:rgba(255,255,255,.06);border-radius:8px;padding:6px 2px}
+.wx-hours b{display:block;font:700 1rem/1.2 var(--display)}
+.wx-rain{color:#B9D7F0}
+.wx-tip{margin:12px 0 0;font-size:.9rem;color:#FBE7B0}
+.wx-msg{color:#E7C9CF;font-size:.95rem}
+
+/* Main grid */
+main.wrap{padding-top:28px;padding-bottom:60px}
+.grid{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:20px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.panel h2{font:700 1.3rem/1.2 var(--display);margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h2 small{font:500 .85rem var(--body);color:var(--muted)}
+.empty{color:var(--muted);margin:4px 0}
+.linkbtn{background:none;border:0;padding:0;color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* Today */
+.cls{display:grid;grid-template-columns:4.6rem 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.cls:first-of-type{border-top:0}
+.cls-time{font:600 .95rem/1.25 var(--display);color:var(--muted)}
+.cls-name{font-weight:600;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.cls-meta{color:var(--muted);font-size:.9rem}
+.cls.now .cls-time{color:var(--maroon)}
+.cls.now{background:var(--rose);margin:0 -10px;padding:10px;border-radius:10px;border-top-color:transparent}
+.cls.done{opacity:.5}
+.tag{font-size:.78rem;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--maroon);color:#fff}
+
+/* Due */
+.task{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line)}
+.task:first-child{border-top:0}
+.task input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--sage)}
+.task-text{font-weight:500}
+.task-meta{font-size:.85rem;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.when{font-size:.85rem;font-weight:600;white-space:nowrap}
+.when.late{color:var(--late)}
+.when.soon{color:var(--maroon)}
+.task.exam .task-text::after{content:"Exam";margin-left:8px;font-size:.72rem;font-weight:700;background:var(--maroon);color:#fff;border-radius:4px;padding:1px 6px;vertical-align:2px}
+.task.quiz .task-text::after{content:"Quiz";margin-left:8px;font-size:.72rem;font-weight:700;background:#E9D9DC;color:var(--maroon);border-radius:4px;padding:1px 6px;vertical-align:2px}
+.task.isdone .task-text{text-decoration:line-through;color:var(--muted)}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 4px;opacity:.6}
+.del:hover{opacity:1;color:var(--late)}
+.addform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.addform input[type=text]{grid-column:1/-1}
+.field{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff;min-width:0;width:100%}
+.btn{background:var(--maroon);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--maroon-deep)}
+.btn.full{grid-column:1/-1}
+.btn.light{background:var(--rose);color:var(--maroon)}
+.btn.light:hover{background:#EBD3D8}
+details.done-list{margin-top:10px;font-size:.92rem}
+details.done-list summary{cursor:pointer;color:var(--muted)}
+
+/* Errands */
+.errand{display:flex;gap:10px;align-items:center;padding:6px 0}
+.errand input{width:20px;height:20px;accent-color:var(--sage)}
+.errand.isdone span{text-decoration:line-through;color:var(--muted)}
+.errand span{flex:1}
+.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:2px 0 10px}
+.progress i{display:block;height:100%;background:var(--sage);transition:width .3s}
+.inline-add{display:flex;gap:8px;margin-top:10px}
+
+/* Courses */
+.section-title{font:700 1.55rem/1.2 var(--display);margin:34px 0 14px}
+.courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.course{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.course h3{margin:0;font:700 1.2rem/1.15 var(--display)}
+.course .title{color:var(--muted);font-size:.88rem;margin-top:2px}
+.course-links{display:flex;gap:12px;flex-wrap:wrap;font-size:.9rem}
+.course-links a{font-weight:600;text-underline-offset:3px}
+.course-links .off{color:var(--muted);font-weight:500}
+.course .next{font-size:.88rem;color:var(--muted)}
+.course .next b{color:var(--ink);font-weight:600}
+.pt{background:#FAF8F9;border-radius:10px;padding:10px;display:grid;gap:6px;margin-top:auto}
+.pt label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.pt .row{display:flex;gap:6px}
+.pt .btn{background:var(--c)}
+.pt .btn:hover{filter:brightness(.85)}
+
+/* Links */
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.links a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none}
+.links a:hover{border-color:var(--maroon)}
+.links b{display:block;font-weight:600}
+.links span{font-size:.84rem;color:var(--muted)}
+
+/* Dialog */
+dialog{border:0;border-radius:16px;padding:0;width:min(760px,94vw);max-height:90vh;box-shadow:0 20px 60px rgba(30,22,25,.35)}
+dialog::backdrop{background:rgba(30,22,25,.45)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+.dlg-head h2{margin:0;font:700 1.35rem var(--display)}
+.dlg-body{padding:6px 20px 22px}
+.dlg-body h3{font:700 1.1rem var(--display);margin:22px 0 4px}
+.hint{color:var(--muted);font-size:.9rem;margin:0 0 10px}
+.cedit{border:1px solid var(--line);border-left:6px solid var(--c);border-radius:10px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:1fr 2fr 70px;gap:8px}
+.cedit .wide{grid-column:1/-1}
+.cedit label{font-size:.8rem;font-weight:600;color:var(--muted);display:grid;gap:3px}
+.cedit input[type=color]{height:40px;padding:2px;border:1px solid var(--line);border-radius:9px;width:100%}
+.cedit.flash{animation:flash 1.4s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 3px #C9A227}100%{box-shadow:none}}
+.sched-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.sched-add{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr;gap:8px;margin-top:10px}
+.days{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.days label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:.9rem}
+.days input{accent-color:var(--maroon)}
+.backup{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;max-width:min(520px,92vw);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:960px){
+  .grid{grid-template-columns:1fr 1fr}
+  .grid .due{grid-column:1/-1;order:-1}
+}
+@media (max-width:640px){
+  .band .wrap{grid-template-columns:1fr}
+  .wx{min-width:0}
+  .grid{grid-template-columns:1fr}
+  .cedit{grid-template-columns:1fr 1fr}
+  .cedit .c-title{grid-column:1/-1}
+  .sched-add{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="wrap">
+    <div>
+      <h1 class="hello">Howdy, <span id="name">Aggie</span>.</h1>
+      <p class="date" id="today-date"></p>
+      <p class="summary" id="summary"></p>
+      <div class="band-actions">
+        <button class="btn-ghost" id="open-settings">Edit courses &amp; class times</button>
+      </div>
+    </div>
+    <section class="wx" id="weather" aria-label="College Station weather">
+      <p class="wx-msg">Loading College Station weather…</p>
+    </section>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <section class="panel today" aria-labelledby="h-today">
+      <h2 id="h-today">Today's classes <small id="today-dow"></small></h2>
+      <div id="today-list"></div>
+    </section>
+
+    <section class="panel due" aria-labelledby="h-due">
+      <h2 id="h-due">Due soon <small id="due-count"></small></h2>
+      <div id="task-list"></div>
+      <details class="done-list" id="done-wrap" hidden>
+        <summary id="done-summary"></summary>
+        <div id="done-list"></div>
+      </details>
+      <form class="addform" id="task-form" autocomplete="off">
+        <input type="text" class="field" id="t-text" placeholder="Add an assignment, quiz or exam" required aria-label="What's due">
+        <select class="field" id="t-course" aria-label="Course"></select>
+        <select class="field" id="t-type" aria-label="Type">
+          <option value="assignment">Assignment</option>
+          <option value="quiz">Quiz</option>
+          <option value="exam">Exam</option>
+        </select>
+        <input type="date" class="field" id="t-due" required aria-label="Due date">
+        <button class="btn">Add</button>
+      </form>
+    </section>
+
+    <section class="panel errands" aria-labelledby="h-err">
+      <h2 id="h-err">Dorm errands <small>resets Mondays</small></h2>
+      <div class="progress" aria-hidden="true"><i id="err-bar"></i></div>
+      <div id="errand-list"></div>
+      <form class="inline-add" id="errand-form" autocomplete="off">
+        <input class="field" id="e-text" placeholder="Add an errand" required aria-label="New errand">
+        <button class="btn light">Add</button>
+      </form>
+    </section>
+  </div>
+
+  <h2 class="section-title">Courses</h2>
+  <div class="courses" id="courses"></div>
+
+  <h2 class="section-title">Quick links</h2>
+  <nav class="links" id="links" aria-label="Quick links"></nav>
+</main>
+
+<dialog id="settings" aria-labelledby="dlg-title">
+  <div class="dlg-head">
+    <h2 id="dlg-title">Courses &amp; class times</h2>
+    <button class="btn light" id="close-settings">Done</button>
+  </div>
+  <div class="dlg-body">
+    <h3>Your courses</h3>
+    <p class="hint">For practice tests, paste each course's Claude Project link. Open the Project in your browser and copy the address bar (it starts with https://claude.ai/project/).</p>
+    <div id="course-edit"></div>
+
+    <h3>Class times</h3>
+    <p class="hint">These fill in "Today's classes" at the top of the page.</p>
+    <div id="sched-list"></div>
+    <form class="sched-add" id="sched-form">
+      <select class="field" id="s-course" aria-label="Course"></select>
+      <input type="time" class="field" id="s-start" required aria-label="Start time">
+      <input type="time" class="field" id="s-end" required aria-label="End time">
+      <input class="field" id="s-place" placeholder="Building &amp; room" aria-label="Building and room">
+      <div class="days" role="group" aria-label="Days">
+        <label><input type="checkbox" value="1">Mon</label>
+        <label><input type="checkbox" value="2">Tue</label>
+        <label><input type="checkbox" value="3">Wed</label>
+        <label><input type="checkbox" value="4">Thu</label>
+        <label><input type="checkbox" value="5">Fri</label>
+        <button class="btn" style="margin-left:auto">Add class time</button>
+      </div>
+    </form>
+
+    <h3>Your name</h3>
+    <input class="field" id="name-input" style="max-width:260px" aria-label="Your name" placeholder="Type your first name">
+
+    <h3>Backup</h3>
+    <p class="hint">Everything is saved in this browser only. Download a backup to move your hub to your phone or another computer, then load it there.</p>
+    <div class="backup">
+      <button class="btn light" id="export">Download backup</button>
+      <label class="btn light" style="display:inline-block">Load backup<input type="file" id="import" accept="application/json" hidden></label>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+const KEY = "aggieHub.v1";
+const LAT = 30.6280, LON = -96.3344; // College Station, TX
+
+const DEFAULT_STATE = {
+  name: "",
+  courses: [
+    {id:"c1", code:"MATH 151", title:"Calculus I", color:"#5B0A1A", canvas:"https://canvas.tamu.edu", project:"", drive:""},
+    {id:"c2", code:"CHEM 117", title:"", color:"#2F6B5F", canvas:"https://canvas.tamu.edu", project:"", drive:""},
+    {id:"c3", code:"Course 3", title:"Tap Edit to rename", color:"#3B4A8C", canvas:"https://canvas.tamu.edu", project:"", drive:""},
+    {id:"c4", code:"Course 4", title:"Tap Edit to rename", color:"#A15C12", canvas:"https://canvas.tamu.edu", project:"", drive:""},
+    {id:"c5", code:"Course 5", title:"Tap Edit to rename", color:"#7A3E7A", canvas:"https://canvas.tamu.edu", project:"", drive:""}
+  ],
+  schedule: [],
+  tasks: [],
+  errands: [
+    {id:"e1", text:"Laundry", done:false},
+    {id:"e2", text:"Pick up mail / packages", done:false},
+    {id:"e3", text:"Groceries & snacks run", done:false},
+    {id:"e4", text:"Take out trash & recycling", done:false},
+    {id:"e5", text:"Wipe down desk, vacuum floor", done:false},
+    {id:"e6", text:"Check dining dollars balance", done:false},
+    {id:"e7", text:"Plan next week in this hub", done:false}
+  ],
+  errandsWeek: null
+};
+
+const LINKS = [
+  ["Canvas", "Course pages & grades", "https://canvas.tamu.edu"],
+  ["Howdy", "Registration, bills, records", "https://howdy.tamu.edu"],
+  ["TAMU Email", "Your @tamu.edu inbox", "https://mail.google.com"],
+  ["Google Drive", "Course files", "https://drive.google.com"],
+  ["Claude", "Your course Projects", "https://claude.ai/projects"],
+  ["Bus routes", "Transportation Services", "https://transport.tamu.edu"],
+  ["Dining", "Halls, hours, meal plans", "https://dining.tamu.edu"],
+  ["Residence Life", "Housing & maintenance", "https://reslife.tamu.edu"],
+  ["Academic Success Center", "Tutoring & study help", "https://asc.tamu.edu"],
+  ["University Libraries", "Study rooms & research", "https://library.tamu.edu"],
+  ["Student Health", "Appointments", "https://shs.tamu.edu"],
+  ["Rec Center", "Hours & classes", "https://recsports.tamu.edu"],
+  ["Academic calendar", "Registrar deadlines", "https://registrar.tamu.edu"],
+  ["IT help", "Help Desk Central", "https://it.tamu.edu"]
+];
+
+// ---------- state ----------
+let state;
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ state = Object.assign(structuredClone(DEFAULT_STATE), JSON.parse(raw)); return; }
+  }catch(e){}
+  state = structuredClone(DEFAULT_STATE);
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("Couldn't save in this browser. Download a backup to keep your changes."); }
+}
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = s => document.querySelector(s);
+const course = id => state.courses.find(c => c.id === id);
+
+// ---------- dates ----------
+const DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function isoDay(d){ const z = new Date(d); z.setMinutes(z.getMinutes()-z.getTimezoneOffset()); return z.toISOString().slice(0,10); }
+function daysUntil(iso){
+  const [y,m,d] = iso.split("-").map(Number);
+  const due = new Date(y, m-1, d); const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((due - t)/86400000);
+}
+function whenText(n){
+  if(n < -1) return [`${-n} days late`, "late"];
+  if(n === -1) return ["1 day late", "late"];
+  if(n === 0) return ["Today", "soon"];
+  if(n === 1) return ["Tomorrow", "soon"];
+  if(n < 7) return [`In ${n} days`, ""];
+  const dt = new Date(Date.now()+n*86400000);
+  return [dt.toLocaleDateString(undefined,{month:"short", day:"numeric"}), ""];
+}
+function mondayKey(){ const d = new Date(); const off = (d.getDay()+6)%7; d.setDate(d.getDate()-off); return isoDay(d); }
+function fmtTime(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  const ap = h >= 12 ? "pm" : "am"; const hh = ((h+11)%12)+1;
+  return `${hh}:${String(m).padStart(2,"0")} ${ap}`;
+}
+const mins = hhmm => { const [h,m] = hhmm.split(":").map(Number); return h*60+m; };
+
+// ---------- render: header ----------
+function renderHeader(){
+  const now = new Date();
+  $("#name").textContent = state.name || "Aggie";
+  $("#today-date").textContent = now.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
+  const todays = todaysClasses();
+  const open = state.tasks.filter(t => !t.done);
+  const week = open.filter(t => daysUntil(t.due) <= 7);
+  const late = open.filter(t => daysUntil(t.due) < 0);
+  const bits = [];
+  bits.push(todays.length ? `${todays.length} ${todays.length===1?"class":"classes"} today` : "No classes today");
+  bits.push(week.length ? `${week.length} ${week.length===1?"thing":"things"} due in the next week` : "nothing due this week");
+  let s = bits.join(", ") + ".";
+  if(late.length) s += ` ${late.length} overdue.`;
+  $("#summary").textContent = s;
+}
+
+// ---------- render: today ----------
+function todaysClasses(){
+  const dow = new Date().getDay();
+  return state.schedule.filter(s => s.days.includes(dow)).sort((a,b) => mins(a.start)-mins(b.start));
+}
+function renderToday(){
+  const list = todaysClasses(), el = $("#today-list");
+  $("#today-dow").textContent = DOW[new Date().getDay()];
+  if(!state.schedule.length){
+    el.innerHTML = `<p class="empty">Add your class times and they'll show up here each day.</p><p><button class="linkbtn" data-open-settings="sched">Add class times</button></p>`;
+    return;
+  }
+  if(!list.length){ el.innerHTML = `<p class="empty">No classes today. Good day to get ahead on what's due.</p>`; return; }
+  const n = new Date(), cur = n.getHours()*60+n.getMinutes();
+  let nextFound = false;
+  el.innerHTML = list.map(s => {
+    const c = course(s.courseId) || {code:"Class", color:"#888"};
+    const st = mins(s.start), en = mins(s.end);
+    let cls = "", status = "";
+    if(cur >= en) cls = "done";
+    else if(cur >= st){ cls = "now"; status = `<span class="tag">Now</span>`; }
+    else if(!nextFound){ nextFound = true; const d = st-cur; status = d <= 90 ? `<span class="cls-meta">in ${d} min</span>` : ""; }
+    return `<div class="cls ${cls}">
+      <div class="cls-time">${fmtTime(s.start)}<br><span style="font-weight:500">${fmtTime(s.end)}</span></div>
+      <div><div class="cls-name"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.code)} ${status}</div>
+      <div class="cls-meta">${esc(s.place || "")}</div></div></div>`;
+  }).join("");
+}
+
+// ---------- render: tasks ----------
+function taskRow(t){
+  const c = course(t.courseId);
+  const [w, wc] = whenText(daysUntil(t.due));
+  return `<div class="task ${t.type} ${t.done?"isdone":""}">
+    <input type="checkbox" data-task="${t.id}" ${t.done?"checked":""} aria-label="Mark ${esc(t.text)} done">
+    <div><div class="task-text">${esc(t.text)}</div>
+      <div class="task-meta">${c?`<span class="dot" style="background:${esc(c.color)}"></span>${esc(c.code)}`:""}</div></div>
+    <div style="text-align:right"><div class="when ${t.done?"":wc}">${esc(w)}</div>
+      <button class="del" data-del-task="${t.id}" aria-label="Delete ${esc(t.text)}" title="Delete">×</button></div>
+  </div>`;
+}
+function renderTasks(){
+  const open = state.tasks.filter(t => !t.done).sort((a,b) => a.due.localeCompare(b.due));
+  const done = state.tasks.filter(t => t.done).sort((a,b) => b.due.localeCompare(a.due));
+  $("#task-list").innerHTML = open.length ? open.map(taskRow).join("") : `<p class="empty">Nothing due. Add your next assignment, quiz or exam below.</p>`;
+  $("#due-count").textContent = open.length ? `${open.length} open` : "";
+  $("#done-wrap").hidden = !done.length;
+  $("#done-summary").textContent = `Finished (${done.length})`;
+  $("#done-list").innerHTML = done.slice(0,30).map(taskRow).join("");
+}
+
+// ---------- render: errands ----------
+function renderErrands(){
+  if(state.errandsWeek !== mondayKey()){
+    state.errands.forEach(e => e.done = false);
+    state.errandsWeek = mondayKey(); save();
+  }
+  const done = state.errands.filter(e => e.done).length;
+  $("#err-bar").style.width = state.errands.length ? (100*done/state.errands.length)+"%" : "0";
+  $("#errand-list").innerHTML = state.errands.map(e => `<label class="errand ${e.done?"isdone":""}">
+    <input type="checkbox" data-errand="${e.id}" ${e.done?"checked":""}><span>${esc(e.text)}</span>
+    <button class="del" type="button" data-del-errand="${e.id}" aria-label="Remove ${esc(e.text)}" title="Remove">×</button></label>`).join("");
+}
+
+// ---------- render: courses ----------
+function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? u : ""; }
+function renderCourses(){
+  $("#courses").innerHTML = state.courses.map(c => {
+    const next = state.tasks.filter(t => !t.done && t.courseId === c.id).sort((a,b) => a.due.localeCompare(b.due))[0];
+    const exam = state.tasks.filter(t => !t.done && t.courseId === c.id && t.type === "exam" && daysUntil(t.due) >= 0).sort((a,b) => a.due.localeCompare(b.due))[0];
+    const link = (label, url) => safeUrl(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : `<span class="off">${label}: not set</span>`;
+    return `<article class="course" style="--c:${esc(c.color)}">
+      <div><h3>${esc(c.code)}</h3>${c.title?`<div class="title">${esc(c.title)}</div>`:""}</div>
+      <div class="course-links">${link("Canvas", c.canvas)}${link("Drive folder", c.drive)}<button class="linkbtn" data-edit-course="${c.id}" style="font-size:.9rem">Edit</button></div>
+      <div class="next">${exam ? `Next exam: <b>${esc(whenText(daysUntil(exam.due))[0])}</b>` : next ? `Next due: <b>${esc(next.text)}</b>, ${esc(whenText(daysUntil(next.due))[0].toLowerCase())}` : "Nothing due"}</div>
+      <form class="pt" data-pt="${c.id}">
+        <label for="pt-topic-${c.id}">Practice test</label>
+        <input class="field" id="pt-topic-${c.id}" placeholder="Topic (optional)" aria-label="Practice test topic">
+        <div class="row">
+          <select class="field" aria-label="Format">
+            <option value="Online">Online quiz</option>
+            <option value="Written">Written (Word)</option>
+            <option value="Flashcards">Flashcards</option>
+          </select>
+          <button class="btn">Start</button>
+        </div>
+      </form>
+    </article>`;
+  }).join("");
+}
+
+function renderLinks(){
+  $("#links").innerHTML = LINKS.map(([n,d,u]) => `<a href="${u}" target="_blank" rel="noopener"><b>${esc(n)}</b><span>${esc(d)}</span></a>`).join("");
+}
+
+function courseOptions(sel){
+  sel.innerHTML = state.courses.map(c => `<option value="${c.id}">${esc(c.code)}</option>`).join("") + (sel.id === "t-course" ? `<option value="">Other / personal</option>` : "");
+}
+
+function renderAll(){
+  renderHeader(); renderToday(); renderTasks(); renderErrands(); renderCourses();
+  courseOptions($("#t-course")); courseOptions($("#s-course"));
+}
+
+// ---------- weather ----------
+const WMO = {0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Rain showers",81:"Rain showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorms",96:"Storms with hail",99:"Storms with hail"};
+async function loadWeather(){
+  const el = $("#weather");
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`+
+    `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m`+
+    `&hourly=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code`+
+    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=2`;
+  try{
+    const r = await fetch(url); if(!r.ok) throw new Error(r.status);
+    const w = await r.json();
+    const cur = w.current, d = w.daily;
+    const nowIdx = Math.max(0, w.hourly.time.findIndex(t => t >= cur.time.slice(0,13)+":00"));
+    const hours = [];
+    for(let i = nowIdx+1; i <= nowIdx+6 && i < w.hourly.time.length; i++){
+      const h = new Date(w.hourly.time[i]).getHours();
+      hours.push(`<div>${((h+11)%12)+1}${h>=12?"p":"a"}<b>${Math.round(w.hourly.temperature_2m[i])}°</b><span class="wx-rain">${w.hourly.precipitation_probability[i]}%</span></div>`);
+    }
+    const rain = d.precipitation_probability_max[0];
+    const hi = Math.round(d.temperature_2m_max[0]), lo = Math.round(d.temperature_2m_min[0]);
+    let tip = "";
+    if(rain >= 50) tip = `${rain}% chance of rain today. Bring an umbrella.`;
+    else if(rain >= 30) tip = `Some rain possible (${rain}%). A light jacket or umbrella won't hurt.`;
+    else if(hi >= 95) tip = "Hot one. Bring a water bottle between classes.";
+    else if(lo <= 45) tip = "Cold morning. Grab a jacket.";
+    el.innerHTML = `<div class="wx-top"><div class="wx-temp">${Math.round(cur.temperature_2m)}°</div>
+      <div><div class="wx-cond">${WMO[cur.weather_code] || "—"}</div>
+      <div class="wx-sub">Feels ${Math.round(cur.apparent_temperature)}°, high ${hi}° low ${lo}°</div>
+      <div class="wx-sub">College Station, wind ${Math.round(cur.wind_speed_10m)} mph</div></div></div>
+      <div class="wx-hours" aria-label="Next six hours, temperature and chance of rain">${hours.join("")}</div>
+      ${tip?`<p class="wx-tip">${tip}</p>`:""}
+      <p class="wx-sub" style="margin:8px 0 0">Tomorrow: ${WMO[d.weather_code[1]]||""}, ${Math.round(d.temperature_2m_max[1])}°/${Math.round(d.temperature_2m_min[1])}°, ${d.precipitation_probability_max[1]}% rain</p>`;
+  }catch(e){
+    el.innerHTML = `<p class="wx-msg">Weather isn't loading right now. <a href="https://forecast.weather.gov/MapClick.php?lat=${LAT}&lon=${LON}" target="_blank" rel="noopener">See the College Station forecast</a></p>`;
+  }
+}
+
+// ---------- settings dialog ----------
+const dlg = $("#settings");
+function renderSettings(){
+  $("#name-input").value = state.name || "";
+  $("#course-edit").innerHTML = state.courses.map(c => `<div class="cedit" id="ce-${c.id}" style="--c:${esc(c.color)}">
+    <label>Code<input class="field" data-cf="code" data-id="${c.id}" value="${esc(c.code)}"></label>
+    <label class="c-title">Name<input class="field" data-cf="title" data-id="${c.id}" value="${esc(c.title)}"></label>
+    <label>Color<input type="color" data-cf="color" data-id="${c.id}" value="${esc(c.color)}"></label>
+    <label class="wide">Claude Project link<input class="field" data-cf="project" data-id="${c.id}" value="${esc(c.project)}" placeholder="https://claude.ai/project/..."></label>
+    <label class="wide">Canvas link<input class="field" data-cf="canvas" data-id="${c.id}" value="${esc(c.canvas)}" placeholder="https://canvas.tamu.edu/courses/..."></label>
+    <label class="wide">Google Drive folder link<input class="field" data-cf="drive" data-id="${c.id}" value="${esc(c.drive)}" placeholder="https://drive.google.com/drive/folders/..."></label>
+  </div>`).join("");
+  const sch = [...state.schedule].sort((a,b) => (a.days[0]-b.days[0]) || (mins(a.start)-mins(b.start)));
+  $("#sched-list").innerHTML = sch.length ? sch.map(s => {
+    const c = course(s.courseId);
+    const days = s.days.map(d => DOW[d].slice(0,3)).join(", ");
+    return `<div class="sched-row"><span><b>${esc(c?c.code:"?")}</b> ${days}, ${fmtTime(s.start)} to ${fmtTime(s.end)}${s.place?`, ${esc(s.place)}`:""}</span>
+      <button class="del" data-del-sched="${s.id}" aria-label="Remove class time">×</button></div>`;
+  }).join("") : `<p class="empty">No class times yet.</p>`;
+}
+function openSettings(focus){
+  renderSettings();
+  if(!dlg.open) dlg.showModal();
+  if(focus === "sched"){ $("#s-course").focus(); $("#sched-form").scrollIntoView({block:"center"}); }
+  else if(focus){
+    const box = document.getElementById("ce-"+focus);
+    if(box){ box.scrollIntoView({block:"center"}); box.classList.add("flash"); const inp = box.querySelector('[data-cf="project"]'); if(!course(focus).project) inp.focus(); }
+  }
+}
+$("#open-settings").onclick = () => openSettings();
+$("#close-settings").onclick = () => dlg.close();
+dlg.addEventListener("close", renderAll);
+dlg.addEventListener("input", e => {
+  const f = e.target.dataset.cf;
+  if(f){
+    const c = course(e.target.dataset.id); c[f] = e.target.value.trim();
+    if(f === "color") e.target.closest(".cedit").style.setProperty("--c", c.color);
+    save();
+  }
+  if(e.target.id === "name-input"){ state.name = e.target.value.trim(); save(); }
+});
+$("#sched-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const days = [...e.target.querySelectorAll(".days input:checked")].map(i => +i.value);
+  if(!days.length){ toast("Pick at least one day for this class."); return; }
+  const start = $("#s-start").value, end = $("#s-end").value;
+  if(mins(end) <= mins(start)){ toast("End time needs to be after the start time."); return; }
+  state.schedule.push({id:uid(), courseId:$("#s-course").value, days, start, end, place:$("#s-place").value.trim()});
+  save(); e.target.reset(); renderSettings(); toast("Class time added.");
+});
+$("#export").onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `aggie-hub-backup-${isoDay(new Date())}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$("#import").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(!Array.isArray(data.courses)) throw 0;
+    state = Object.assign(structuredClone(DEFAULT_STATE), data); save(); renderSettings(); renderAll(); toast("Backup loaded.");
+  }catch(err){ toast("That file isn't an Aggie Hub backup. Choose the .json file you downloaded."); }
+  e.target.value = "";
+};
+
+// ---------- events ----------
+document.addEventListener("click", e => {
+  const t = e.target;
+  if(t.dataset.openSettings){ openSettings(t.dataset.openSettings); }
+  if(t.dataset.editCourse){ openSettings(t.dataset.editCourse); }
+  if(t.dataset.delTask){ state.tasks = state.tasks.filter(x => x.id !== t.dataset.delTask); save(); renderAll(); }
+  if(t.dataset.delErrand){ e.preventDefault(); state.errands = state.errands.filter(x => x.id !== t.dataset.delErrand); save(); renderErrands(); }
+  if(t.dataset.delSched){ state.schedule = state.schedule.filter(x => x.id !== t.dataset.delSched); save(); renderSettings(); }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if(t.dataset.task){ const x = state.tasks.find(y => y.id === t.dataset.task); x.done = t.checked; save(); renderAll(); }
+  if(t.dataset.errand){ const x = state.errands.find(y => y.id === t.dataset.errand); x.done = t.checked; save(); renderErrands(); }
+});
+$("#task-form").addEventListener("submit", e => {
+  e.preventDefault();
+  state.tasks.push({id:uid(), text:$("#t-text").value.trim(), courseId:$("#t-course").value, type:$("#t-type").value, due:$("#t-due").value, done:false});
+  save(); $("#t-text").value = ""; renderAll(); $("#t-text").focus();
+});
+$("#errand-form").addEventListener("submit", e => {
+  e.preventDefault();
+  state.errands.push({id:uid(), text:$("#e-text").value.trim(), done:false});
+  save(); $("#e-text").value = ""; renderErrands();
+});
+
+// Practice test: copy the request, open the course's Claude Project
+document.addEventListener("submit", async e => {
+  const form = e.target.closest("[data-pt]"); if(!form) return;
+  e.preventDefault();
+  const c = course(form.dataset.pt);
+  const topic = form.querySelector("input").value.trim();
+  const fmt = form.querySelector("select").value;
+  const url = safeUrl(c.project);
+  if(!url){ toast(`Add the Claude Project link for ${c.code} first.`); openSettings(c.id); return; }
+  const prompt = `/practice-test ${fmt} practice test for ${c.code}${topic ? ` on ${topic}` : ""}`;
+  window.open(url, "_blank", "noopener");
+  try{ await navigator.clipboard.writeText(prompt); toast(`Copied: "${prompt}". Paste it into a new chat in the ${c.code} Project and press Enter.`); }
+  catch(err){ toast(`In the ${c.code} Project, type: ${prompt}`); }
+});
+
+let toastTimer;
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 6000);
+}
+
+// ---------- start ----------
+load();
+$("#t-due").value = isoDay(new Date(Date.now()+86400000));
+renderLinks(); renderAll(); loadWeather();
+setInterval(() => { renderHeader(); renderToday(); }, 60000);
+setInterval(loadWeather, 30*60000);
+})();
+</script>
+</body>
+</html>
