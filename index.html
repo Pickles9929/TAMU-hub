@@ -20,8 +20,32 @@
   --line:#E2DCE0;
   --sage:#2F6B5F;
   --late:#B42318;
+  --accent:#5B0A1A;
+  --field:#FFFFFF;
+  --soft:#FAF8F9;
+  --quiz:#E9D9DC;
+  --rose-hover:#EBD3D8;
+  color-scheme:light;
   --display:"Bricolage Grotesque", system-ui, sans-serif;
   --body:"Instrument Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --rose:#3A2128;
+    --paper:#151012;
+    --card:#211A1D;
+    --ink:#F2ECEE;
+    --muted:#AFA3A8;
+    --line:#3A3034;
+    --sage:#5FAE9C;
+    --late:#FF8A7A;
+    --accent:#F0A7B6;
+    --field:#191315;
+    --soft:#2A2124;
+    --quiz:#4A2A32;
+    --rose-hover:#4A2A32;
+    color-scheme:dark;
+  }
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -61,7 +85,7 @@ main.wrap{padding-top:28px;padding-bottom:60px}
 .panel h2{font:700 1.3rem/1.2 var(--display);margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .panel h2 small{font:500 .85rem var(--body);color:var(--muted)}
 .empty{color:var(--muted);margin:4px 0}
-.linkbtn{background:none;border:0;padding:0;color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 /* Today */
 .cls{display:grid;grid-template-columns:4.6rem 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
@@ -70,7 +94,7 @@ main.wrap{padding-top:28px;padding-bottom:60px}
 .cls-name{font-weight:600;display:flex;align-items:center;gap:8px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .cls-meta{color:var(--muted);font-size:.9rem}
-.cls.now .cls-time{color:var(--maroon)}
+.cls.now .cls-time{color:var(--accent)}
 .cls.now{background:var(--rose);margin:0 -10px;padding:10px;border-radius:10px;border-top-color:transparent}
 .cls.done{opacity:.5}
 .tag{font-size:.78rem;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--maroon);color:#fff}
@@ -83,20 +107,20 @@ main.wrap{padding-top:28px;padding-bottom:60px}
 .task-meta{font-size:.85rem;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .when{font-size:.85rem;font-weight:600;white-space:nowrap}
 .when.late{color:var(--late)}
-.when.soon{color:var(--maroon)}
+.when.soon{color:var(--accent)}
 .task.exam .task-text::after{content:"Exam";margin-left:8px;font-size:.72rem;font-weight:700;background:var(--maroon);color:#fff;border-radius:4px;padding:1px 6px;vertical-align:2px}
-.task.quiz .task-text::after{content:"Quiz";margin-left:8px;font-size:.72rem;font-weight:700;background:#E9D9DC;color:var(--maroon);border-radius:4px;padding:1px 6px;vertical-align:2px}
+.task.quiz .task-text::after{content:"Quiz";margin-left:8px;font-size:.72rem;font-weight:700;background:var(--quiz);color:var(--accent);border-radius:4px;padding:1px 6px;vertical-align:2px}
 .task.isdone .task-text{text-decoration:line-through;color:var(--muted)}
-.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 4px;opacity:.6}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.25rem;line-height:1;min-width:36px;min-height:36px;padding:6px;margin:-6px -8px -6px 0;border-radius:8px;opacity:.7}
 .del:hover{opacity:1;color:var(--late)}
 .addform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
 .addform input[type=text]{grid-column:1/-1}
-.field{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff;min-width:0;width:100%}
+.field{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--field);min-width:0;width:100%}
 .btn{background:var(--maroon);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}
 .btn:hover{background:var(--maroon-deep)}
 .btn.full{grid-column:1/-1}
-.btn.light{background:var(--rose);color:var(--maroon)}
-.btn.light:hover{background:#EBD3D8}
+.btn.light{background:var(--rose);color:var(--accent)}
+.btn.light:hover{background:var(--rose-hover)}
 details.done-list{margin-top:10px;font-size:.92rem}
 details.done-list summary{cursor:pointer;color:var(--muted)}
 
@@ -120,7 +144,7 @@ details.done-list summary{cursor:pointer;color:var(--muted)}
 .course-links .off{color:var(--muted);font-weight:500}
 .course .next{font-size:.88rem;color:var(--muted)}
 .course .next b{color:var(--ink);font-weight:600}
-.pt{background:#FAF8F9;border-radius:10px;padding:10px;display:grid;gap:6px;margin-top:auto}
+.pt{background:var(--soft);border-radius:10px;padding:10px;display:grid;gap:6px;margin-top:auto}
 .pt label{font-size:.82rem;font-weight:600;color:var(--muted)}
 .pt .row{display:flex;gap:6px}
 .pt .btn{background:var(--c)}
@@ -129,14 +153,14 @@ details.done-list summary{cursor:pointer;color:var(--muted)}
 /* Links */
 .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .links a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none}
-.links a:hover{border-color:var(--maroon)}
+.links a:hover{border-color:var(--accent)}
 .links b{display:block;font-weight:600}
 .links span{font-size:.84rem;color:var(--muted)}
 
 /* Dialog */
-dialog{border:0;border-radius:16px;padding:0;width:min(760px,94vw);max-height:90vh;box-shadow:0 20px 60px rgba(30,22,25,.35)}
+dialog{border:0;border-radius:16px;padding:0;width:min(760px,94vw);max-height:90vh;box-shadow:0 20px 60px rgba(30,22,25,.35);background:var(--card);color:var(--ink)}
 dialog::backdrop{background:rgba(30,22,25,.45)}
-.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:1}
 .dlg-head h2{margin:0;font:700 1.35rem var(--display)}
 .dlg-body{padding:6px 20px 22px}
 .dlg-body h3{font:700 1.1rem var(--display);margin:22px 0 4px}
@@ -151,11 +175,11 @@ dialog::backdrop{background:rgba(30,22,25,.45)}
 .sched-add{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr;gap:8px;margin-top:10px}
 .days{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
 .days label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:.9rem}
-.days input{accent-color:var(--maroon)}
+.days input{accent-color:var(--accent)}
 .backup{display:flex;gap:8px;flex-wrap:wrap}
 
 /* Toast */
-.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;max-width:min(520px,92vw);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;max-width:min(520px,92vw);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:960px){
@@ -271,7 +295,8 @@ dialog::backdrop{background:rgba(30,22,25,.45)}
     <p class="hint">Everything is saved in this browser only. Download a backup to move your hub to your phone or another computer, then load it there.</p>
     <div class="backup">
       <button class="btn light" id="export">Download backup</button>
-      <label class="btn light" style="display:inline-block">Load backup<input type="file" id="import" accept="application/json" hidden></label>
+      <button class="btn light" type="button" id="import-btn">Load backup</button>
+      <input type="file" id="import" accept="application/json,.json" hidden>
     </div>
   </div>
 </dialog>
@@ -326,10 +351,38 @@ const LINKS = [
 
 // ---------- state ----------
 let state;
+const HEX = /^#[0-9a-f]{6}$/i, ISO = /^\d{4}-\d{2}-\d{2}$/, HHMM = /^\d{2}:\d{2}$/;
+const str = v => typeof v === "string" ? v : "";
+// Fill in defaults and drop anything malformed so a bad save or backup can't break the page.
+function normalize(data){
+  const out = structuredClone(DEFAULT_STATE);
+  if(!data || typeof data !== "object") return out;
+  out.name = str(data.name);
+  if(Array.isArray(data.courses) && data.courses.length){
+    out.courses = data.courses.filter(c => c && str(c.id)).map((c, i) => ({
+      id: c.id, code: str(c.code) || `Course ${i+1}`, title: str(c.title),
+      color: HEX.test(c.color) ? c.color : "#5B0A1A",
+      canvas: str(c.canvas), project: str(c.project), drive: str(c.drive)
+    }));
+    if(!out.courses.length) out.courses = structuredClone(DEFAULT_STATE.courses);
+  }
+  if(Array.isArray(data.tasks)) out.tasks = data.tasks
+    .filter(t => t && str(t.id) && str(t.text) && ISO.test(t.due))
+    .map(t => ({id:t.id, text:t.text, courseId:str(t.courseId), type:["assignment","quiz","exam"].includes(t.type) ? t.type : "assignment", due:t.due, done:!!t.done}));
+  if(Array.isArray(data.schedule)) out.schedule = data.schedule
+    .filter(s => s && str(s.id) && HHMM.test(s.start) && HHMM.test(s.end) && Array.isArray(s.days))
+    .map(s => ({id:s.id, courseId:str(s.courseId), days:s.days.map(Number).filter(d => d >= 0 && d <= 6), start:s.start, end:s.end, place:str(s.place)}))
+    .filter(s => s.days.length);
+  if(Array.isArray(data.errands)) out.errands = data.errands
+    .filter(e => e && str(e.id) && str(e.text))
+    .map(e => ({id:e.id, text:e.text, done:!!e.done}));
+  out.errandsWeek = str(data.errandsWeek) || null;
+  return out;
+}
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw){ state = Object.assign(structuredClone(DEFAULT_STATE), JSON.parse(raw)); return; }
+    if(raw){ state = normalize(JSON.parse(raw)); return; }
   }catch(e){}
   state = structuredClone(DEFAULT_STATE);
 }
@@ -349,14 +402,15 @@ function daysUntil(iso){
   const due = new Date(y, m-1, d); const t = new Date(); t.setHours(0,0,0,0);
   return Math.round((due - t)/86400000);
 }
-function whenText(n){
+function whenText(iso){
+  const n = daysUntil(iso);
   if(n < -1) return [`${-n} days late`, "late"];
   if(n === -1) return ["1 day late", "late"];
   if(n === 0) return ["Today", "soon"];
   if(n === 1) return ["Tomorrow", "soon"];
   if(n < 7) return [`In ${n} days`, ""];
-  const dt = new Date(Date.now()+n*86400000);
-  return [dt.toLocaleDateString(undefined,{month:"short", day:"numeric"}), ""];
+  const [y,m,d] = iso.split("-").map(Number);
+  return [new Date(y, m-1, d).toLocaleDateString(undefined,{month:"short", day:"numeric"}), ""];
 }
 function mondayKey(){ const d = new Date(); const off = (d.getDay()+6)%7; d.setDate(d.getDate()-off); return isoDay(d); }
 function fmtTime(hhmm){
@@ -373,7 +427,7 @@ function renderHeader(){
   $("#today-date").textContent = now.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
   const todays = todaysClasses();
   const open = state.tasks.filter(t => !t.done);
-  const week = open.filter(t => daysUntil(t.due) <= 7);
+  const week = open.filter(t => { const n = daysUntil(t.due); return n >= 0 && n <= 7; });
   const late = open.filter(t => daysUntil(t.due) < 0);
   const bits = [];
   bits.push(todays.length ? `${todays.length} ${todays.length===1?"class":"classes"} today` : "No classes today");
@@ -415,7 +469,7 @@ function renderToday(){
 // ---------- render: tasks ----------
 function taskRow(t){
   const c = course(t.courseId);
-  const [w, wc] = whenText(daysUntil(t.due));
+  const [w, wc] = whenText(t.due);
   return `<div class="task ${t.type} ${t.done?"isdone":""}">
     <input type="checkbox" data-task="${t.id}" ${t.done?"checked":""} aria-label="Mark ${esc(t.text)} done">
     <div><div class="task-text">${esc(t.text)}</div>
@@ -457,7 +511,7 @@ function renderCourses(){
     return `<article class="course" style="--c:${esc(c.color)}">
       <div><h3>${esc(c.code)}</h3>${c.title?`<div class="title">${esc(c.title)}</div>`:""}</div>
       <div class="course-links">${link("Canvas", c.canvas)}${link("Drive folder", c.drive)}<button class="linkbtn" data-edit-course="${c.id}" style="font-size:.9rem">Edit</button></div>
-      <div class="next">${exam ? `Next exam: <b>${esc(whenText(daysUntil(exam.due))[0])}</b>` : next ? `Next due: <b>${esc(next.text)}</b>, ${esc(whenText(daysUntil(next.due))[0].toLowerCase())}` : "Nothing due"}</div>
+      <div class="next">${exam ? `Next exam: <b>${esc(whenText(exam.due)[0])}</b>` : next ? `Next due: <b>${esc(next.text)}</b>, ${esc(whenText(next.due)[0].toLowerCase())}` : "Nothing due"}</div>
       <form class="pt" data-pt="${c.id}">
         <label for="pt-topic-${c.id}">Practice test</label>
         <input class="field" id="pt-topic-${c.id}" placeholder="Topic (optional)" aria-label="Practice test topic">
@@ -580,19 +634,21 @@ $("#export").onclick = () => {
   a.download = `aggie-hub-backup-${isoDay(new Date())}.json`; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
+$("#import-btn").onclick = () => $("#import").click();
 $("#import").onchange = async e => {
   const f = e.target.files[0]; if(!f) return;
   try{
     const data = JSON.parse(await f.text());
-    if(!Array.isArray(data.courses)) throw 0;
-    state = Object.assign(structuredClone(DEFAULT_STATE), data); save(); renderSettings(); renderAll(); toast("Backup loaded.");
+    if(!data || !Array.isArray(data.courses)) throw 0;
+    state = normalize(data); save(); renderSettings(); renderAll(); toast("Backup loaded.");
   }catch(err){ toast("That file isn't an Aggie Hub backup. Choose the .json file you downloaded."); }
   e.target.value = "";
 };
 
 // ---------- events ----------
 document.addEventListener("click", e => {
-  const t = e.target;
+  const t = e.target.closest("[data-open-settings],[data-edit-course],[data-del-task],[data-del-errand],[data-del-sched]");
+  if(!t) return;
   if(t.dataset.openSettings){ openSettings(t.dataset.openSettings); }
   if(t.dataset.editCourse){ openSettings(t.dataset.editCourse); }
   if(t.dataset.delTask){ state.tasks = state.tasks.filter(x => x.id !== t.dataset.delTask); save(); renderAll(); }
@@ -625,8 +681,10 @@ document.addEventListener("submit", async e => {
   const url = safeUrl(c.project);
   if(!url){ toast(`Add the Claude Project link for ${c.code} first.`); openSettings(c.id); return; }
   const prompt = `/practice-test ${fmt} practice test for ${c.code}${topic ? ` on ${topic}` : ""}`;
+  // Start the copy before opening the tab: once the new tab has focus the clipboard write is often refused.
+  const copying = navigator.clipboard ? navigator.clipboard.writeText(prompt) : Promise.reject();
   window.open(url, "_blank", "noopener");
-  try{ await navigator.clipboard.writeText(prompt); toast(`Copied: "${prompt}". Paste it into a new chat in the ${c.code} Project and press Enter.`); }
+  try{ await copying; toast(`Copied: "${prompt}". Paste it into a new chat in the ${c.code} Project and press Enter.`); }
   catch(err){ toast(`In the ${c.code} Project, type: ${prompt}`); }
 });
 
@@ -638,9 +696,19 @@ function toast(msg){
 
 // ---------- start ----------
 load();
-$("#t-due").value = isoDay(new Date(Date.now()+86400000));
+const tomorrow = () => { const d = new Date(); d.setDate(d.getDate()+1); return isoDay(d); };
+let defaultDue = tomorrow();
+$("#t-due").value = defaultDue;
 renderLinks(); renderAll(); loadWeather();
-setInterval(() => { renderHeader(); renderToday(); }, 60000);
+let currentDay = isoDay(new Date());
+setInterval(() => {
+  const day = isoDay(new Date());
+  if(day !== currentDay){
+    // New day: refresh due labels, errand reset, and the default due date (unless the user changed it).
+    if($("#t-due").value === defaultDue){ defaultDue = tomorrow(); $("#t-due").value = defaultDue; }
+    currentDay = day; renderAll();
+  } else { renderHeader(); renderToday(); }
+}, 60000);
 setInterval(loadWeather, 30*60000);
 })();
 </script>
