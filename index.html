@@ -124,11 +124,25 @@ main.wrap{padding-top:28px;padding-bottom:60px}
 details.done-list{margin-top:10px;font-size:.92rem}
 details.done-list summary{cursor:pointer;color:var(--muted)}
 
-/* Errands */
-.errand{display:flex;gap:10px;align-items:center;padding:6px 0}
-.errand input{width:20px;height:20px;accent-color:var(--sage)}
-.errand.isdone span{text-decoration:line-through;color:var(--muted)}
-.errand span{flex:1}
+/* To-dos */
+.todo{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line)}
+.todo:first-child{border-top:0}
+.todo input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--sage)}
+.todo-text{font-weight:500;overflow-wrap:anywhere}
+.todo.isdone .todo-text{text-decoration:line-through;color:var(--muted)}
+.todo .task-meta a{color:var(--accent);font-weight:600;text-underline-offset:3px}
+.todo-add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.todo-add input[type=text]{grid-column:1/-1}
+.todo-add label{font-size:.8rem;font-weight:600;color:var(--muted);display:grid;gap:3px}
+.email-line{font-size:.85rem;color:var(--muted);margin:0 0 8px;display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center}
+.email-line.err{color:var(--late)}
+.rule{display:grid;grid-template-columns:auto 1fr 2fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rule input[type=checkbox]{width:20px;height:20px;accent-color:var(--sage)}
+.rule-add{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-top:10px}
+.email-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.steps{margin:6px 0 10px;padding-left:1.2em;color:var(--muted);font-size:.9rem}
+.steps li{margin:3px 0}
+.steps b{color:var(--ink)}
 .progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:2px 0 10px}
 .progress i{display:block;height:100%;background:var(--sage);transition:width .3s}
 .inline-add{display:flex;gap:8px;margin-top:10px}
@@ -193,6 +207,9 @@ dialog::backdrop{background:rgba(30,22,25,.45)}
   .cedit{grid-template-columns:1fr 1fr}
   .cedit .c-title{grid-column:1/-1}
   .sched-add{grid-template-columns:1fr 1fr}
+  .rule{grid-template-columns:auto 1fr auto}
+  .rule .rq{grid-column:2/3;grid-row:2}
+  .rule-add{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -242,13 +259,29 @@ dialog::backdrop{background:rgba(30,22,25,.45)}
       </form>
     </section>
 
-    <section class="panel errands" aria-labelledby="h-err">
-      <h2 id="h-err">Dorm errands <small>resets Mondays</small></h2>
-      <div class="progress" aria-hidden="true"><i id="err-bar"></i></div>
-      <div id="errand-list"></div>
-      <form class="inline-add" id="errand-form" autocomplete="off">
-        <input class="field" id="e-text" placeholder="Add an errand" required aria-label="New errand">
-        <button class="btn light">Add</button>
+    <section class="panel todos" aria-labelledby="h-todo">
+      <h2 id="h-todo">To-dos <small id="todo-count"></small></h2>
+      <div class="email-line" id="email-line" hidden></div>
+      <div id="todo-list"></div>
+      <details class="done-list" id="upcoming-wrap" hidden>
+        <summary id="upcoming-summary"></summary>
+        <div id="upcoming-list"></div>
+      </details>
+      <details class="done-list" id="tdone-wrap" hidden>
+        <summary id="tdone-summary"></summary>
+        <div id="tdone-list"></div>
+      </details>
+      <form class="todo-add" id="todo-form" autocomplete="off">
+        <input type="text" class="field" id="d-text" placeholder="Add a to-do" required aria-label="New to-do">
+        <label>Due (optional)<input type="date" class="field" id="d-due"></label>
+        <label>Repeat<select class="field" id="d-repeat">
+          <option value="none">Doesn't repeat</option>
+          <option value="daily">Every day</option>
+          <option value="weekly">Every week</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Every month</option>
+        </select></label>
+        <button class="btn light full">Add to-do</button>
       </form>
     </section>
   </div>
@@ -291,6 +324,9 @@ dialog::backdrop{background:rgba(30,22,25,.45)}
     <h3>Your name</h3>
     <input class="field" id="name-input" style="max-width:260px" aria-label="Your name" placeholder="Type your first name">
 
+    <h3 id="email-h">Email to-dos</h3>
+    <div id="email-settings"></div>
+
     <h3>Backup</h3>
     <p class="hint">Everything is saved in this browser only. Download a backup to move your hub to your phone or another computer, then load it there.</p>
     <div class="backup">
@@ -320,17 +356,20 @@ const DEFAULT_STATE = {
   ],
   schedule: [],
   tasks: [],
-  errands: [
-    {id:"e1", text:"Laundry", done:false},
-    {id:"e2", text:"Pick up mail / packages", done:false},
-    {id:"e3", text:"Groceries & snacks run", done:false},
-    {id:"e4", text:"Take out trash & recycling", done:false},
-    {id:"e5", text:"Wipe down desk, vacuum floor", done:false},
-    {id:"e6", text:"Check dining dollars balance", done:false},
-    {id:"e7", text:"Plan next week in this hub", done:false}
-  ],
-  errandsWeek: null
+  todos: [],
+  email: {
+    on: false,
+    since: 0,   // only emails received after this time (ms) become to-dos
+    seen: [],   // message ids already turned into to-dos
+    rules: [
+      {id:"r1", name:"Forwarded to myself", q:"from:me to:me todo", on:true},
+      {id:"r2", name:"Package ready for pickup", q:'subject:(package OR parcel) (ready OR pickup OR "pick up")', on:true}
+    ]
+  }
 };
+const REPEAT = {none:"Doesn't repeat", daily:"Every day", weekly:"Every week", biweekly:"Every 2 weeks", monthly:"Every month"};
+// The old "Dorm errands" starter list, dropped when older saves are loaded.
+const OLD_ERRANDS = ["Laundry","Pick up mail / packages","Groceries & snacks run","Take out trash & recycling","Wipe down desk, vacuum floor","Check dining dollars balance","Plan next week in this hub"];
 
 const LINKS = [
   ["Canvas", "Course pages & grades", "https://canvas.tamu.edu"],
@@ -373,10 +412,25 @@ function normalize(data){
     .filter(s => s && str(s.id) && HHMM.test(s.start) && HHMM.test(s.end) && Array.isArray(s.days))
     .map(s => ({id:s.id, courseId:str(s.courseId), days:s.days.map(Number).filter(d => d >= 0 && d <= 6), start:s.start, end:s.end, place:str(s.place)}))
     .filter(s => s.days.length);
-  if(Array.isArray(data.errands)) out.errands = data.errands
-    .filter(e => e && str(e.id) && str(e.text))
-    .map(e => ({id:e.id, text:e.text, done:!!e.done}));
-  out.errandsWeek = str(data.errandsWeek) || null;
+  // To-dos (older saves kept them as "errands"; the starter dorm list is dropped)
+  const rawTodos = Array.isArray(data.todos) ? data.todos
+    : Array.isArray(data.errands) ? data.errands.filter(e => !(e && /^e[1-7]$/.test(e.id) && OLD_ERRANDS.includes(e.text))) : [];
+  out.todos = rawTodos.filter(t => t && str(t.id) && str(t.text)).map(t => {
+    const repeat = REPEAT[t.repeat] ? t.repeat : "none";
+    const x = {id:t.id, text:t.text, done:!!t.done && repeat === "none", due:ISO.test(t.due) ? t.due : "", repeat};
+    if(Number.isInteger(t.day)) x.day = t.day;
+    if(t.email && typeof t.email === "object") x.email = {url:str(t.email.url), from:str(t.email.from), rule:str(t.email.rule)};
+    return x;
+  });
+  const em = data.email;
+  if(em && typeof em === "object"){
+    out.email.on = !!em.on;
+    out.email.since = Number.isFinite(em.since) ? em.since : 0;
+    out.email.seen = Array.isArray(em.seen) ? em.seen.filter(x => typeof x === "string").slice(-500) : [];
+    if(Array.isArray(em.rules)) out.email.rules = em.rules
+      .filter(r => r && str(r.id) && typeof r.q === "string")
+      .map(r => ({id:r.id, name:str(r.name) || "Email rule", q:r.q, on:!!r.on}));
+  }
   return out;
 }
 function load(){
@@ -412,7 +466,6 @@ function whenText(iso){
   const [y,m,d] = iso.split("-").map(Number);
   return [new Date(y, m-1, d).toLocaleDateString(undefined,{month:"short", day:"numeric"}), ""];
 }
-function mondayKey(){ const d = new Date(); const off = (d.getDay()+6)%7; d.setDate(d.getDate()-off); return isoDay(d); }
 function fmtTime(hhmm){
   const [h,m] = hhmm.split(":").map(Number);
   const ap = h >= 12 ? "pm" : "am"; const hh = ((h+11)%12)+1;
@@ -432,6 +485,8 @@ function renderHeader(){
   const bits = [];
   bits.push(todays.length ? `${todays.length} ${todays.length===1?"class":"classes"} today` : "No classes today");
   bits.push(week.length ? `${week.length} ${week.length===1?"thing":"things"} due in the next week` : "nothing due this week");
+  const td = activeTodos().length;
+  if(td) bits.push(`${td} ${td===1?"to-do":"to-dos"}`);
   let s = bits.join(", ") + ".";
   if(late.length) s += ` ${late.length} overdue.`;
   $("#summary").textContent = s;
@@ -488,17 +543,67 @@ function renderTasks(){
   $("#done-list").innerHTML = done.slice(0,30).map(taskRow).join("");
 }
 
-// ---------- render: errands ----------
-function renderErrands(){
-  if(state.errandsWeek !== mondayKey()){
-    state.errands.forEach(e => e.done = false);
-    state.errandsWeek = mondayKey(); save();
+// ---------- to-dos ----------
+const todayIso = () => isoDay(new Date());
+const isRecurring = t => t.repeat && t.repeat !== "none";
+// Recurring to-dos whose next date is still ahead wait in "Coming up".
+const isUpcoming = t => isRecurring(t) && t.due && t.due > todayIso();
+const byDue = (a,b) => (a.due || "9999") .localeCompare(b.due || "9999");
+const activeTodos = () => state.todos.filter(t => !t.done && !isUpcoming(t)).sort(byDue);
+function stepDate(iso, repeat, day){
+  const [y,m,d] = iso.split("-").map(Number);
+  if(repeat === "daily") return isoDay(new Date(y, m-1, d+1));
+  if(repeat === "weekly") return isoDay(new Date(y, m-1, d+7));
+  if(repeat === "biweekly") return isoDay(new Date(y, m-1, d+14));
+  // monthly: same day of the month, or the last day if the month is shorter
+  const want = day || d, last = new Date(y, m+1, 0).getDate();
+  return isoDay(new Date(y, m, Math.min(want, last)));
+}
+function nextDue(t){
+  const today = todayIso();
+  let d = t.due || today;
+  do { d = stepDate(d, t.repeat, t.day); } while(d <= today);
+  return d;
+}
+function todoRow(t, mode){
+  const meta = [];
+  if(t.due){
+    const [w, wc] = whenText(t.due);
+    meta.push(`<span class="when ${mode === "done" ? "" : wc}">${esc(mode === "upcoming" ? "Next: " + w : w)}</span>`);
   }
-  const done = state.errands.filter(e => e.done).length;
-  $("#err-bar").style.width = state.errands.length ? (100*done/state.errands.length)+"%" : "0";
-  $("#errand-list").innerHTML = state.errands.map(e => `<label class="errand ${e.done?"isdone":""}">
-    <input type="checkbox" data-errand="${e.id}" ${e.done?"checked":""}><span>${esc(e.text)}</span>
-    <button class="del" type="button" data-del-errand="${e.id}" aria-label="Remove ${esc(e.text)}" title="Remove">×</button></label>`).join("");
+  if(isRecurring(t)) meta.push(`<span>↻ ${esc(REPEAT[t.repeat])}</span>`);
+  if(t.email){
+    const u = safeUrl(t.email.url);
+    meta.push(u ? `<a href="${esc(u)}" target="_blank" rel="noopener">Open email</a>` : `<span>From email</span>`);
+  }
+  const label = mode === "upcoming" ? `Mark ${esc(t.text)} done early` : `Mark ${esc(t.text)} done`;
+  return `<div class="todo ${mode === "done" ? "isdone" : ""}">
+    <input type="checkbox" data-todo="${t.id}" ${mode === "done" ? "checked" : ""} aria-label="${label}">
+    <div><div class="todo-text">${esc(t.text)}</div>${meta.length ? `<div class="task-meta">${meta.join("")}</div>` : ""}</div>
+    <button class="del" data-del-todo="${t.id}" aria-label="Delete ${esc(t.text)}" title="Delete">×</button>
+  </div>`;
+}
+function renderTodos(){
+  const active = activeTodos();
+  const upcoming = state.todos.filter(isUpcoming).sort(byDue);
+  const done = state.todos.filter(t => t.done);
+  $("#todo-list").innerHTML = active.length ? active.map(t => todoRow(t, "active")).join("")
+    : `<p class="empty">${state.todos.length ? "All caught up." : "Nothing here yet. Add a to-do below."}</p>`;
+  $("#todo-count").textContent = active.length ? `${active.length} open` : "";
+  $("#upcoming-wrap").hidden = !upcoming.length;
+  $("#upcoming-summary").textContent = `Coming up (${upcoming.length})`;
+  $("#upcoming-list").innerHTML = upcoming.map(t => todoRow(t, "upcoming")).join("");
+  $("#tdone-wrap").hidden = !done.length;
+  $("#tdone-summary").textContent = `Finished (${done.length})`;
+  $("#tdone-list").innerHTML = done.slice(-30).reverse().map(t => todoRow(t, "done")).join("");
+}
+function toggleTodo(id, checked){
+  const t = state.todos.find(x => x.id === id); if(!t) return;
+  if(isRecurring(t) && checked){
+    t.due = nextDue(t); t.done = false;
+    toast(`Done. Next one: ${whenText(t.due)[0].toLowerCase()}.`);
+  } else t.done = checked;
+  save(); renderTodos(); renderHeader();
 }
 
 // ---------- render: courses ----------
@@ -537,7 +642,7 @@ function courseOptions(sel){
 }
 
 function renderAll(){
-  renderHeader(); renderToday(); renderTasks(); renderErrands(); renderCourses();
+  renderHeader(); renderToday(); renderTasks(); renderTodos(); renderEmailLine(); renderCourses();
   courseOptions($("#t-course")); courseOptions($("#s-course"));
 }
 
@@ -578,10 +683,153 @@ async function loadWeather(){
   }
 }
 
+// ---------- email to-dos (needs the Claude link: reads Gmail through the viewer's connector) ----------
+const GMAIL = "Gmail";
+let mcpNs, dlNs = null, checking = false, lastCheck = 0, emailErr = "";
+const hasClaude = !!(window.claude && typeof window.claude.use === "function");
+function cleanSubject(s){
+  let x = str(s).trim(), prev;
+  do { prev = x; x = x.replace(/^\s*(fwd?|fw|re)\s*:\s*/i, ""); } while(x !== prev);
+  return x.slice(0, 200);
+}
+function emailErrorText(err){
+  switch(err && err.code){
+    case "needs_reauth": return "Gmail needs reconnecting. In Claude, open Settings, then Connectors, and reconnect Gmail.";
+    case "server_not_connected": case "selection_required": case "server_not_found":
+      return "Gmail isn't connected. In Claude, open Settings, then Connectors, and connect Gmail.";
+    case "not_in_manifest": case "approval_required": case "consent_required": case "not_granted":
+      return "Aggie Hub doesn't have permission to read Gmail yet. Tap Check email now and choose Allow.";
+    case "blocked_by_policy": return "Your Claude organization blocks this Gmail search.";
+    case "server_unavailable": case "rate_limited": return "Gmail didn't answer. It'll try again soon.";
+    default: return "Couldn't check email right now. It'll try again soon.";
+  }
+}
+const STOP_CODES = ["needs_reauth","server_not_connected","selection_required","server_not_found","not_in_manifest","approval_required","consent_required","blocked_by_policy","not_granted","capability_disabled","capability_removed"];
+async function checkEmail(manual){
+  if(!mcpNs || !state.email.on || checking) return;
+  checking = true; emailErr = ""; renderEmailLine(); renderEmailSettings();
+  let added = 0;
+  // Gmail's after: takes a YYYY/MM/DD date (inclusive); duplicates are skipped by message id.
+  const after = isoDay(new Date(state.email.since || Date.now())).replace(/-/g, "/");
+  const badRules = [];
+  for(const r of state.email.rules.filter(r => r.on && r.q.trim())){
+    try{
+      const res = await mcpNs.callTool(GMAIL, "search_threads",
+        {query:`(${r.q}) after:${after}`, pageSize:25, view:"THREAD_VIEW_SUMMARY"}, {cache:false});
+      const threads = res && res.payload && Array.isArray(res.payload.threads) ? res.payload.threads : [];
+      for(const th of threads){
+        if(!th || !th.id) continue;
+        const msgs = Array.isArray(th.messages) ? th.messages : [];
+        const m = msgs[msgs.length-1] || {};
+        const key = str(m.id) || th.id;   // the newest message, so a new email in an old thread still counts
+        if(state.email.seen.includes(key)) continue;
+        state.email.seen.push(key);
+        state.todos.push({id:uid(), text:cleanSubject(m.subject) || r.name, done:false, due:todayIso(), repeat:"none",
+          email:{url: str(th.viewUrl) || str(m.viewUrl) || `https://mail.google.com/mail/#all/${encodeURIComponent(th.id)}`, from:str(m.sender), rule:r.name}});
+        added++;
+      }
+    }catch(err){
+      if(err && err.code === "tool_error"){ badRules.push(r.name); continue; }
+      emailErr = emailErrorText(err);
+      if(STOP_CODES.includes(err && err.code)) break;
+    }
+  }
+  if(badRules.length && !emailErr) emailErr = `Gmail couldn't run the search for: ${badRules.join(", ")}. Check its search words in Settings.`;
+  state.email.seen = state.email.seen.slice(-500);
+  lastCheck = Date.now(); checking = false;
+  save(); renderTodos(); renderHeader(); renderEmailLine(); renderEmailSettings();
+  if(added) toast(`Added ${added} ${added === 1 ? "to-do" : "to-dos"} from email.`);
+  else if(manual && !emailErr) toast("No new to-do emails.");
+}
+function agoText(ms){
+  const m = Math.round((Date.now() - ms) / 60000);
+  return m < 1 ? "just now" : m === 1 ? "1 min ago" : m < 60 ? `${m} min ago` : `${Math.round(m/60)} hr ago`;
+}
+function renderEmailLine(){
+  const el = $("#email-line");
+  if(!mcpNs || !state.email.on){ el.hidden = true; return; }
+  el.hidden = false;
+  el.classList.toggle("err", !!emailErr);
+  el.innerHTML = checking ? `<span>Checking email…</span>`
+    : `<span>${esc(emailErr || (lastCheck ? `Email checked ${agoText(lastCheck)}` : "Email to-dos on"))}</span><button class="linkbtn" data-email="check">Check now</button>`;
+}
+function renderEmailSettings(){
+  const el = $("#email-settings"); if(!el) return;
+  if(!mcpNs){
+    el.innerHTML = `<p class="hint">${mcpNs === undefined && hasClaude ? "Checking whether Gmail is available…"
+      : "Email to-dos only work when you open Aggie Hub from your Claude link, because that's where it can read your Gmail. Everything else works here."}</p>`;
+    return;
+  }
+  const how = `<ol class="steps">
+      <li><b>Any email:</b> forward it to your own TAMU address and type <b>todo</b> in the message.</li>
+      <li><b>Emails that come often</b> (like package notices) are picked up automatically by the rules below. Each rule is a Gmail search, so anything that works in Gmail's search box works here.</li>
+      <li>New matching emails show up in To-dos each time you open the hub, and every 15 minutes while it's open.</li>
+    </ol>`;
+  if(!state.email.on){
+    el.innerHTML = `<p class="hint">Turn emails into to-dos automatically. Aggie Hub only reads the emails that match your rules, and never changes or sends anything.</p>${how}
+      <div class="email-actions"><button class="btn" data-email="on">Turn on email to-dos</button></div>`;
+    return;
+  }
+  el.innerHTML = `<p class="hint" ${emailErr ? 'style="color:var(--late)"' : ""}>${esc(checking ? "Checking email…" : emailErr || (lastCheck ? `On. Last checked ${agoText(lastCheck)}.` : "On."))}</p>
+    <div class="email-actions"><button class="btn light" data-email="check">Check email now</button><button class="btn light" data-email="off">Turn off</button></div>
+    ${how}
+    <div id="rule-list">${state.email.rules.map(r => `<div class="rule">
+      <input type="checkbox" data-rule="on" data-id="${r.id}" ${r.on ? "checked" : ""} aria-label="Use rule ${esc(r.name)}">
+      <input class="field" data-rule="name" data-id="${r.id}" value="${esc(r.name)}" aria-label="Rule name">
+      <input class="field rq" data-rule="q" data-id="${r.id}" value="${esc(r.q)}" aria-label="Gmail search for ${esc(r.name)}">
+      <button class="del" data-del-rule="${r.id}" aria-label="Delete rule ${esc(r.name)}" title="Delete rule">×</button>
+    </div>`).join("") || `<p class="empty">No rules yet.</p>`}</div>
+    <form class="rule-add" id="rule-form" autocomplete="off">
+      <input class="field" id="r-name" placeholder="Rule name, e.g. Mail room" required aria-label="New rule name">
+      <input class="field" id="r-q" placeholder="Gmail search, e.g. from:mailroom@tamu.edu" required aria-label="New rule Gmail search">
+      <button class="btn light">Add rule</button>
+    </form>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-email]"); if(!b) return;
+  const act = b.dataset.email;
+  if(act === "on"){
+    state.email.on = true;
+    // Start a few days back so a package notice that just arrived is picked up.
+    if(!state.email.since) state.email.since = Date.now() - 3*86400000;
+    save(); checkEmail(true);
+  }
+  if(act === "off"){ state.email.on = false; emailErr = ""; save(); renderEmailLine(); renderEmailSettings(); }
+  if(act === "check") checkEmail(true);
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-del-rule]"); if(!b) return;
+  state.email.rules = state.email.rules.filter(r => r.id !== b.dataset.delRule); save(); renderEmailSettings();
+});
+document.addEventListener("input", e => {
+  const f = e.target.dataset && e.target.dataset.rule; if(!f) return;
+  const r = state.email.rules.find(x => x.id === e.target.dataset.id); if(!r) return;
+  if(f === "on") r.on = e.target.checked; else r[f] = e.target.value;
+  save();
+});
+document.addEventListener("submit", e => {
+  if(e.target.id !== "rule-form") return;
+  e.preventDefault();
+  state.email.rules.push({id:uid(), name:$("#r-name").value.trim(), q:$("#r-q").value.trim(), on:true});
+  save(); renderEmailSettings(); toast("Rule added. It applies to emails from now on.");
+});
+if(hasClaude){
+  window.claude.use("mcp").then(ns => ns, () => null).then(ns => {
+    mcpNs = ns; renderEmailLine(); renderEmailSettings();
+    if(ns && state.email.on) checkEmail(false);
+  });
+  window.claude.use("downloads").then(ns => { dlNs = ns; }, () => {});
+} else mcpNs = null;
+setInterval(() => { if(document.visibilityState === "visible") checkEmail(false); }, 15*60000);
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "visible" && Date.now() - lastCheck > 5*60000) checkEmail(false);
+});
+
 // ---------- settings dialog ----------
 const dlg = $("#settings");
 function renderSettings(){
   $("#name-input").value = state.name || "";
+  renderEmailSettings();
   $("#course-edit").innerHTML = state.courses.map(c => `<div class="cedit" id="ce-${c.id}" style="--c:${esc(c.color)}">
     <label>Code<input class="field" data-cf="code" data-id="${c.id}" value="${esc(c.code)}"></label>
     <label class="c-title">Name<input class="field" data-cf="title" data-id="${c.id}" value="${esc(c.title)}"></label>
@@ -628,10 +876,16 @@ $("#sched-form").addEventListener("submit", e => {
   state.schedule.push({id:uid(), courseId:$("#s-course").value, days, start, end, place:$("#s-place").value.trim()});
   save(); e.target.reset(); renderSettings(); toast("Class time added.");
 });
-$("#export").onclick = () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-  a.download = `aggie-hub-backup-${isoDay(new Date())}.json`; a.click();
+$("#export").onclick = async () => {
+  const json = JSON.stringify(state, null, 2), filename = `aggie-hub-backup-${isoDay(new Date())}.json`;
+  if(dlNs){
+    // Inside Claude, files are saved through the viewer's own save prompt.
+    try{ await dlNs.save({filename, data:json}); }
+    catch(err){ if(!err || err.code !== "declined") toast("Couldn't save the backup here. Try again in a moment."); }
+    return;
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([json], {type:"application/json"}));
+  a.download = filename; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
 $("#import-btn").onclick = () => $("#import").click();
@@ -647,28 +901,33 @@ $("#import").onchange = async e => {
 
 // ---------- events ----------
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-open-settings],[data-edit-course],[data-del-task],[data-del-errand],[data-del-sched]");
+  const t = e.target.closest("[data-open-settings],[data-edit-course],[data-del-task],[data-del-todo],[data-del-sched]");
   if(!t) return;
   if(t.dataset.openSettings){ openSettings(t.dataset.openSettings); }
   if(t.dataset.editCourse){ openSettings(t.dataset.editCourse); }
   if(t.dataset.delTask){ state.tasks = state.tasks.filter(x => x.id !== t.dataset.delTask); save(); renderAll(); }
-  if(t.dataset.delErrand){ e.preventDefault(); state.errands = state.errands.filter(x => x.id !== t.dataset.delErrand); save(); renderErrands(); }
+  if(t.dataset.delTodo){ state.todos = state.todos.filter(x => x.id !== t.dataset.delTodo); save(); renderTodos(); renderHeader(); }
   if(t.dataset.delSched){ state.schedule = state.schedule.filter(x => x.id !== t.dataset.delSched); save(); renderSettings(); }
 });
 document.addEventListener("change", e => {
   const t = e.target;
   if(t.dataset.task){ const x = state.tasks.find(y => y.id === t.dataset.task); x.done = t.checked; save(); renderAll(); }
-  if(t.dataset.errand){ const x = state.errands.find(y => y.id === t.dataset.errand); x.done = t.checked; save(); renderErrands(); }
+  if(t.dataset.todo) toggleTodo(t.dataset.todo, t.checked);
 });
 $("#task-form").addEventListener("submit", e => {
   e.preventDefault();
   state.tasks.push({id:uid(), text:$("#t-text").value.trim(), courseId:$("#t-course").value, type:$("#t-type").value, due:$("#t-due").value, done:false});
   save(); $("#t-text").value = ""; renderAll(); $("#t-text").focus();
 });
-$("#errand-form").addEventListener("submit", e => {
+$("#todo-form").addEventListener("submit", e => {
   e.preventDefault();
-  state.errands.push({id:uid(), text:$("#e-text").value.trim(), done:false});
-  save(); $("#e-text").value = ""; renderErrands();
+  const repeat = $("#d-repeat").value;
+  let due = $("#d-due").value;
+  if(repeat !== "none" && !due) due = todayIso();   // a repeating to-do needs a start date
+  const t = {id:uid(), text:$("#d-text").value.trim(), done:false, due, repeat};
+  if(repeat === "monthly") t.day = Number(due.slice(8, 10));
+  state.todos.push(t);
+  save(); e.target.reset(); renderTodos(); renderHeader(); $("#d-text").focus();
 });
 
 // Practice test: copy the request, open the course's Claude Project
@@ -704,7 +963,7 @@ let currentDay = isoDay(new Date());
 setInterval(() => {
   const day = isoDay(new Date());
   if(day !== currentDay){
-    // New day: refresh due labels, errand reset, and the default due date (unless the user changed it).
+    // New day: refresh due labels, repeating to-dos, and the default due date (unless the user changed it).
     if($("#t-due").value === defaultDue){ defaultDue = tomorrow(); $("#t-due").value = defaultDue; }
     currentDay = day; renderAll();
   } else { renderHeader(); renderToday(); }
