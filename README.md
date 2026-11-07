@@ -8,7 +8,7 @@ Open `index.html` in a browser, or host it anywhere that serves static files (Gi
 
 ## Your data
 
-Everything is saved in your browser's local storage. Nothing is sent anywhere. The only network request is the weather forecast from Open-Meteo.
+Everything is saved in your browser's local storage. Nothing is sent anywhere. The only network requests are for the College Station weather: the National Weather Service forecast (with current conditions from Easterwood Airport), with Open-Meteo as a backup. The last good forecast is saved so the card still shows something if both are down.
 
 To move your hub to another device or browser, open **Edit courses & class times**, then **Download backup**. On the other device, use **Load backup** and choose that `.json` file.
 

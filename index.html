@@ -77,6 +77,7 @@ button,input,select{font:inherit;color:inherit}
 .wx-rain{color:#B9D7F0}
 .wx-tip{margin:12px 0 0;font-size:.9rem;color:#FBE7B0}
 .wx-msg{color:#E7C9CF;font-size:.95rem}
+.wx-src{margin:6px 0 0;font-size:.75rem;opacity:.8}
 
 /* Main grid */
 main.wrap{padding-top:28px;padding-bottom:60px}
@@ -543,39 +544,129 @@ function renderAll(){
 
 // ---------- weather ----------
 const WMO = {0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Fog",48:"Fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",56:"Freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Rain showers",81:"Rain showers",82:"Heavy showers",85:"Snow showers",86:"Snow showers",95:"Thunderstorms",96:"Storms with hail",99:"Storms with hail"};
-async function loadWeather(){
-  const el = $("#weather");
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`+
+// College Station is pinned: NWS forecast for the grid point, current conditions from Easterwood Airport (KCLL).
+// Open-Meteo is the backup, and the last good forecast is kept so the card never goes blank.
+const WX_CACHE = "aggieHub.weather", WX_POINT = "aggieHub.nwsPoint", WX_STATION = "KCLL";
+const TZ = "America/Chicago";
+const chiDay = (d = new Date()) => new Intl.DateTimeFormat("en-CA",{timeZone:TZ, year:"numeric", month:"2-digit", day:"2-digit"}).format(d);
+const hourLabel = h => `${((h+11)%12)+1}${h>=12?"p":"a"}`;
+const cToF = c => c*9/5+32;
+function readLS(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
+function writeLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+async function getJSON(url, tries = 2){
+  let err;
+  for(let i = 0; i < tries; i++){
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+    try{
+      const r = await fetch(url, {signal:ctl.signal, headers:{Accept:"application/geo+json, application/json"}});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    }catch(e){ err = e; if(i < tries-1) await new Promise(res => setTimeout(res, 1500)); }
+    finally{ clearTimeout(timer); }
+  }
+  throw err;
+}
+
+async function nwsPoint(){
+  const cached = readLS(WX_POINT);
+  if(cached && cached.hourly && Date.now() - cached.at < 30*864e5) return cached;
+  const p = (await getJSON(`https://api.weather.gov/points/${LAT},${LON}`)).properties;
+  const pt = {hourly:p.forecastHourly, daily:p.forecast, at:Date.now()};
+  writeLS(WX_POINT, pt);
+  return pt;
+}
+
+async function fromNWS(){
+  const pt = await nwsPoint();
+  const [hourly, daily, obs] = await Promise.all([
+    getJSON(pt.hourly), getJSON(pt.daily),
+    getJSON(`https://api.weather.gov/stations/${WX_STATION}/observations/latest`, 1).catch(() => null)
+  ]);
+  const hp = hourly.properties.periods, dp = daily.properties.periods;
+  if(!hp.length || !dp.length) throw new Error("empty NWS forecast");
+  const now = Date.now(), today = chiDay(), tmr = chiDay(new Date(now + 864e5));
+  const pop = x => (x.probabilityOfPrecipitation && x.probabilityOfPrecipitation.value) || 0;
+  const future = hp.filter(x => new Date(x.endTime).getTime() > now);
+  const first = future[0] || hp[0];
+  // Current conditions: airport observation if it's recent, otherwise this hour's forecast.
+  let cur = {temp:first.temperature, feels:first.temperature, cond:first.shortForecast, wind:parseInt(first.windSpeed) || 0};
+  const o = obs && obs.properties;
+  if(o && o.temperature && o.temperature.value != null && now - new Date(o.timestamp).getTime() < 2*36e5){
+    const f = (o.heatIndex && o.heatIndex.value != null) ? o.heatIndex.value : (o.windChill && o.windChill.value != null) ? o.windChill.value : o.temperature.value;
+    cur = {temp:cToF(o.temperature.value), feels:cToF(f), cond:o.textDescription || first.shortForecast,
+      wind:o.windSpeed && o.windSpeed.value != null ? o.windSpeed.value/1.609 : cur.wind};
+  }
+  const todayHours = future.filter(x => x.startTime.slice(0,10) === today);
+  const dayP = d => dp.find(x => x.isDaytime && x.startTime.slice(0,10) === d);
+  const nightP = d => dp.find(x => !x.isDaytime && x.startTime.slice(0,10) === d);
+  const tD = dayP(today), tN = nightP(today), mD = dayP(tmr), mN = nightP(tmr);
+  const temps = todayHours.map(x => x.temperature).concat(cur.temp);
+  return {
+    source:"National Weather Service", cur,
+    hi: tD ? tD.temperature : Math.max(...temps),
+    lo: tN ? tN.temperature : Math.min(...temps),
+    rain: Math.max(0, ...todayHours.map(pop), tD ? pop(tD) : 0),
+    hours: future.slice(1,7).map(x => ({h:+x.startTime.slice(11,13), temp:x.temperature, rain:pop(x)})),
+    tomorrow: mD ? {cond:mD.shortForecast, hi:mD.temperature, lo:mN ? mN.temperature : null, rain:Math.max(pop(mD), mN ? pop(mN) : 0)} : null
+  };
+}
+
+async function fromOpenMeteo(){
+  const w = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`+
     `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m`+
     `&hourly=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code`+
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=2`;
+    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FChicago&forecast_days=2`);
+  const c = w.current, d = w.daily;
+  const nowIdx = Math.max(0, w.hourly.time.findIndex(t => t >= c.time.slice(0,13)+":00"));
+  const hours = [];
+  for(let i = nowIdx+1; i <= nowIdx+6 && i < w.hourly.time.length; i++)
+    hours.push({h:+w.hourly.time[i].slice(11,13), temp:w.hourly.temperature_2m[i], rain:w.hourly.precipitation_probability[i] || 0});
+  return {
+    source:"Open-Meteo",
+    cur:{temp:c.temperature_2m, feels:c.apparent_temperature, cond:WMO[c.weather_code] || "—", wind:c.wind_speed_10m},
+    hi:d.temperature_2m_max[0], lo:d.temperature_2m_min[0], rain:d.precipitation_probability_max[0] || 0, hours,
+    tomorrow:{cond:WMO[d.weather_code[1]] || "", hi:d.temperature_2m_max[1], lo:d.temperature_2m_min[1], rain:d.precipitation_probability_max[1] || 0}
+  };
+}
+
+function renderWeather(w, staleNote){
+  const r = Math.round, hi = r(w.hi), lo = r(w.lo), rain = r(w.rain);
+  let tip = "";
+  if(rain >= 50) tip = `${rain}% chance of rain today. Bring an umbrella.`;
+  else if(rain >= 30) tip = `Some rain possible (${rain}%). A light jacket or umbrella won't hurt.`;
+  else if(hi >= 95) tip = "Hot one. Bring a water bottle between classes.";
+  else if(lo <= 45) tip = "Cold morning. Grab a jacket.";
+  const t = w.tomorrow;
+  const updated = new Date(w.at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+  $("#weather").innerHTML = `<div class="wx-top"><div class="wx-temp">${r(w.cur.temp)}°</div>
+    <div><div class="wx-cond">${esc(w.cur.cond)}</div>
+    <div class="wx-sub">Feels ${r(w.cur.feels)}°, high ${hi}° low ${lo}°</div>
+    <div class="wx-sub">College Station, wind ${r(w.cur.wind)} mph</div></div></div>
+    <div class="wx-hours" aria-label="Next six hours, temperature and chance of rain">${w.hours.map(x =>
+      `<div>${hourLabel(x.h)}<b>${r(x.temp)}°</b><span class="wx-rain">${r(x.rain)}%</span></div>`).join("")}</div>
+    ${tip ? `<p class="wx-tip">${tip}</p>` : ""}
+    ${t ? `<p class="wx-sub" style="margin:8px 0 0">Tomorrow: ${esc(t.cond)}, ${r(t.hi)}°${t.lo != null ? "/"+r(t.lo)+"°" : ""}, ${r(t.rain)}% rain</p>` : ""}
+    <p class="wx-sub wx-src">${staleNote ? esc(staleNote) : `${esc(w.source)} · updated ${updated}`}</p>`;
+}
+
+let wxBusy = false;
+async function loadWeather(){
+  if(wxBusy) return; wxBusy = true;
   try{
-    const r = await fetch(url); if(!r.ok) throw new Error(r.status);
-    const w = await r.json();
-    const cur = w.current, d = w.daily;
-    const nowIdx = Math.max(0, w.hourly.time.findIndex(t => t >= cur.time.slice(0,13)+":00"));
-    const hours = [];
-    for(let i = nowIdx+1; i <= nowIdx+6 && i < w.hourly.time.length; i++){
-      const h = new Date(w.hourly.time[i]).getHours();
-      hours.push(`<div>${((h+11)%12)+1}${h>=12?"p":"a"}<b>${Math.round(w.hourly.temperature_2m[i])}°</b><span class="wx-rain">${w.hourly.precipitation_probability[i]}%</span></div>`);
+    let w = null;
+    for(const src of [fromNWS, fromOpenMeteo]){
+      try{ w = await src(); break; }catch(e){ console.warn("Weather source failed:", src.name, e); }
     }
-    const rain = d.precipitation_probability_max[0];
-    const hi = Math.round(d.temperature_2m_max[0]), lo = Math.round(d.temperature_2m_min[0]);
-    let tip = "";
-    if(rain >= 50) tip = `${rain}% chance of rain today. Bring an umbrella.`;
-    else if(rain >= 30) tip = `Some rain possible (${rain}%). A light jacket or umbrella won't hurt.`;
-    else if(hi >= 95) tip = "Hot one. Bring a water bottle between classes.";
-    else if(lo <= 45) tip = "Cold morning. Grab a jacket.";
-    el.innerHTML = `<div class="wx-top"><div class="wx-temp">${Math.round(cur.temperature_2m)}°</div>
-      <div><div class="wx-cond">${WMO[cur.weather_code] || "—"}</div>
-      <div class="wx-sub">Feels ${Math.round(cur.apparent_temperature)}°, high ${hi}° low ${lo}°</div>
-      <div class="wx-sub">College Station, wind ${Math.round(cur.wind_speed_10m)} mph</div></div></div>
-      <div class="wx-hours" aria-label="Next six hours, temperature and chance of rain">${hours.join("")}</div>
-      ${tip?`<p class="wx-tip">${tip}</p>`:""}
-      <p class="wx-sub" style="margin:8px 0 0">Tomorrow: ${WMO[d.weather_code[1]]||""}, ${Math.round(d.temperature_2m_max[1])}°/${Math.round(d.temperature_2m_min[1])}°, ${d.precipitation_probability_max[1]}% rain</p>`;
-  }catch(e){
-    el.innerHTML = `<p class="wx-msg">Weather isn't loading right now. <a href="https://forecast.weather.gov/MapClick.php?lat=${LAT}&lon=${LON}" target="_blank" rel="noopener">See the College Station forecast</a></p>`;
-  }
+    if(w){ w.at = Date.now(); writeLS(WX_CACHE, w); renderWeather(w); return; }
+    const cached = readLS(WX_CACHE);
+    if(cached && Date.now() - cached.at < 12*36e5){
+      const t = new Date(cached.at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+      renderWeather(cached, `Offline: showing the forecast from ${t}. Retrying…`);
+    } else {
+      $("#weather").innerHTML = `<p class="wx-msg">Weather isn't loading right now. <a href="https://forecast.weather.gov/MapClick.php?lat=${LAT}&lon=${LON}" target="_blank" rel="noopener">See the College Station forecast</a></p>`;
+    }
+  } finally { wxBusy = false; }
 }
 
 // ---------- settings dialog ----------
@@ -699,7 +790,9 @@ load();
 const tomorrow = () => { const d = new Date(); d.setDate(d.getDate()+1); return isoDay(d); };
 let defaultDue = tomorrow();
 $("#t-due").value = defaultDue;
-renderLinks(); renderAll(); loadWeather();
+renderLinks(); renderAll();
+{ const c = readLS(WX_CACHE); if(c && Date.now() - c.at < 12*36e5) renderWeather(c, "Refreshing…"); }
+loadWeather();
 let currentDay = isoDay(new Date());
 setInterval(() => {
   const day = isoDay(new Date());
@@ -709,7 +802,11 @@ setInterval(() => {
     currentDay = day; renderAll();
   } else { renderHeader(); renderToday(); }
 }, 60000);
-setInterval(loadWeather, 30*60000);
+setInterval(loadWeather, 20*60000);
+// Refresh when the tab comes back or the connection returns, if the forecast is more than 10 minutes old.
+const wxRefresh = () => { const c = readLS(WX_CACHE); if(!c || Date.now() - c.at > 10*60000) loadWeather(); };
+document.addEventListener("visibilitychange", () => { if(!document.hidden) wxRefresh(); });
+window.addEventListener("online", loadWeather);
 })();
 </script>
 </body>
